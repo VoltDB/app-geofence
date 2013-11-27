@@ -28,37 +28,73 @@
         </ul>
       </header>
       <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <h1>
+<a name="voltdb-example-geo-fencing-" class="anchor" href="#voltdb-example-geo-fencing-"><span class="octicon octicon-link"></span></a>VoltDB Example: Geo-Fencing </h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h2>
+<a name="use-case" class="anchor" href="#use-case"><span class="octicon octicon-link"></span></a>Use Case</h2>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<p>I this example application, thousands of devices are tracked as they provide position (lat/long) updates.  Devices can have geo-fences defined individually based on a "home" location and a radius in miles.</p>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>The client in this example, initializes the device data in the database and then generates random updates to simulate updates that would be received from the devices.  The simulated updates are rudimentary, based on a random small change in lat/long from the device's previous position, so the devices will tend to move in a 2-dimensional "random walk", starting from their home locations.</p>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<p>The database ingests these updates and keeps a history of the positions for each device.  As it processes each update, it also checks to see if this device has a geo-fence enabled and if so, whether the device was previously in-bounds or out-of-bounds.  It calculates the distance from "home" to the new location to see if it is in or out of bounds.  If this is a change in status, it generates an "exit" or "entry" event record, which would result in a notification to the device owner.  All of this logic is found in the "PositionUpdate" stored procedure.</p>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<p>The "TrackEvent" stored procedure processes these events.  It looks up the corresponding advertiser and campaign based on the creative ID which represents which ad was shown.  It also retrieves the corresponding web site and page based on the inventory ID from the event.  The timestamp and event type fields are converted to aid in aggregation, and all of this data is then inserted into the impression_data table.</p>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<p>Several views maintain real-time aggregations on this table to provide a minutely summary for each advertiser, plus drill-down reports grouped by campaign and creative to show detail-level metrics, costs and rates with real-time accuracy.</p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<h2>
+<a name="code-organization" class="anchor" href="#code-organization"><span class="octicon octicon-link"></span></a>Code organization</h2>
 
 <h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<a name="db" class="anchor" href="#db"><span class="octicon octicon-link"></span></a>db</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>The database project, which contains the schema, stored procedures and other configurations that are compiled into a catalog and run in a VoltDB database.  </p>
 
 <h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<a name="client" class="anchor" href="#client"><span class="octicon octicon-link"></span></a>client</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>The java client that loads a set of cards and then generates random card transactions a high velocity to simulate card activity.</p>
+
+<h2>
+<a name="instructions" class="anchor" href="#instructions"><span class="octicon octicon-link"></span></a>Instructions</h2>
+
+<ol>
+<li>
+<p>Start the database in the background</p>
+
+<p>./start_db.sh</p>
+</li>
+<li>
+<p>Run the client application</p>
+
+<p>./run_client.sh</p>
+</li>
+<li>
+<p>Open a web browser to VoltDB Studio</p>
+
+<p>http://localhost:8080/studio</p>
+</li>
+<li>
+<p>Run some queries:</p>
+
+<p>-- check for events:
+SELECT * FROM device_event;</p>
+
+<p>-- see the settings for a device:
+SELECT * FROM devices WHERE id = ?;</p>
+
+<p>-- see the position history for a device:
+SELECT * FROM device_location WHERE id = ? ORDER BY ts;</p>
+</li>
+<li>
+<p>When finished, stop the database and clean up any temp files</p>
+
+<p>voltadmin shutdown
+./clean.sh</p>
+</li>
+</ol>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/VoltDB">VoltDB</a></p>
