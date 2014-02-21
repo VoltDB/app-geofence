@@ -32,6 +32,12 @@ public class PositionUpdate extends VoltProcedure {
     public final SQLStmt updateInsideFence = new SQLStmt(
         "UPDATE devices SET inside_geofence = ? WHERE id = ?;");
 
+    // delete any locations more than 60 minutes old
+    public final SQLStmt deleteOldLocations = new SQLStmt(
+	"DELETE FROM device_location" +
+	" WHERE id = ?"+
+	" AND ts < TO_TIMESTAMP(SECOND,SINCE_EPOCH(SECOND,NOW)-(60*60))"); 
+
     public long run(int id,
                     TimestampType ts,
                     double newLat,
@@ -42,7 +48,9 @@ public class PositionUpdate extends VoltProcedure {
         voltQueueSQL(getDevice,id);
         // insert new location
         voltQueueSQL(newPosition,id,ts,newLat,newLong);
-        
+	// delete any old locations (housekeeping)
+        voltQueueSQL(deleteOldLocations,id);
+	
         VoltTable[] a = voltExecuteSQL();
         VoltTable t = a[0];
         t.advanceRow();
