@@ -1,45 +1,11 @@
 #!/usr/bin/env bash
 
-CATALOG_NAME="GEO_FENCE"
+. ./compile.sh
 
-# This script assumes voltdb/bin is in your path
-VOLTDB_HOME=$(dirname $(dirname "$(which voltdb)"))
-
-# entire script runs within this directory:
-cd db
-
-# clean
-rm -rf obj log debugoutput statement-plans voltdbroot ${CATALOG_NAME}.jar catalog-report.html
-
-# compile java stored procedures
-if find src -name "*.java" &> /dev/null; then
-    SRC=`find src -name "*.java"`
-    CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
-    if [ ! -f $CLASSPATH ]; then
-        echo "voltdb-*.jar file not found for CLASSPATH, edit this script to provide the correct path"
-        exit
-    fi
-    mkdir -p obj
-    javac -classpath $CLASSPATH -d obj $SRC
-    # stop if compilation fails
-    if [ $? != 0 ]; then exit; fi
-fi
-# compile VoltDB catalog
-if [ -f ddl.sql ]; then
-    voltdb compile --classpath obj -o ${CATALOG_NAME}.jar ddl.sql
-    # stop if compilation fails
-    if [ $? != 0 ]; then exit; fi
-fi
-
-# start database in background
+HOST=localhost
 LICENSE=$VOLTDB_HOME/voltdb/license.xml
-nohup voltdb create catalog ${CATALOG_NAME}.jar \
-    license $VOLTDB_HOME/voltdb/license.xml host localhost deployment deployment.xml license $LICENSE > log/nohup.log 2>&1 &
+DEPLOY=deployment.xml
 
-echo "VoltDB started"
-echo 
-echo "to monitor the log, use the command:"
-echo "  tail -f db/log/nohup.log"
-echo
-echo "to stop the database, use the command:"
-echo "  voltadmin shutdown"
+# start VoltDB in background (4.0 syntax)
+voltdb create ${CATALOG_NAME}.jar -H $HOST -d $DEPLOY -l $LICENSE --background
+

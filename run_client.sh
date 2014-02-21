@@ -9,7 +9,7 @@ VOLTDB_HOME=$(dirname $(dirname "$(which voltdb)"))
 cd client
 
 # clean
-rm -rf obj log loader_logs
+rm -rf obj log
 
 # set the classpath
 CLASSPATH=`ls -1 $VOLTDB_HOME/voltdb/voltdb-*.jar`
@@ -17,8 +17,7 @@ if [ ! -f $CLASSPATH ]; then
     echo "voltdb-*.jar file not found for CLASSPATH, edit this script to provide the correct path"
     exit
 fi
-# the VoltDB client uses google guava
-CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/guava-*.jar`"
+
 # the benchmark uses Apache commons CLI
 CLASSPATH="$CLASSPATH:`ls -1 $VOLTDB_HOME/lib/commons-cli-*.jar`"
 

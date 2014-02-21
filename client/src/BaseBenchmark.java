@@ -1,31 +1,20 @@
-package client;
-
 /* This file is part of VoltDB.
- * Copyright (C) 2008-2013 VoltDB Inc.
- * 
- * This file contains original code and/or modifications of original code.
- * Any modifications made by VoltDB Inc. are licensed under the following
- * terms and conditions:
+ * Copyright (C) 2008-2014 VoltDB Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with VoltDB.  If not, see <http://www.gnu.org/licenses/>.
  */
+package client;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -88,7 +77,6 @@ public abstract class BaseBenchmark {
         this.config = config;
 
         ClientConfig clientConfig = new ClientConfig(config.user, config.password, new StatusListener());
-        clientConfig.setHeavyweight(false);
         if (config.autotune) {
             clientConfig.enableAutoTune();
             clientConfig.setAutoTuneTargetInternalLatency(config.latencytarget);
@@ -101,9 +89,7 @@ public abstract class BaseBenchmark {
         periodicStatsContext = client.createStatsContext();
         fullStatsContext = client.createStatsContext();
 
-        System.out.print(HORIZONTAL_RULE);
-        System.out.println(" Command Line Configuration");
-        System.out.println(HORIZONTAL_RULE);
+	printHeading("Command Line Configuration");
         System.out.println(config.getConfigDumpString());
     }
 
@@ -200,30 +186,25 @@ public abstract class BaseBenchmark {
      * @throws Exception if anything unexpected happens.
      */
     public synchronized void printResults() throws Exception {
+        printHeading("Transaction Results");
+	BenchmarkCallback.printAllResults();
+	
         ClientStats stats = fullStatsContext.fetch().getStats();
 
         // 3. Performance statistics
-        System.out.print(HORIZONTAL_RULE);
-        System.out.println(" Client Workload Statistics");
-        System.out.println(HORIZONTAL_RULE);
+        printHeading("Client Workload Statistics");
 
         System.out.printf("Average throughput:            %,9d txns/sec\n", stats.getTxnThroughput());
-        // cast stats.getAverateLatency from long to double
         System.out.printf("Average latency:               %,9.2f ms\n", (double)stats.getAverageLatency());
-        //System.out.printf("Average latency:               %,9d ms\n", stats.getAverageLatency());
         System.out.printf("95th percentile latency:       %,9d ms\n", stats.kPercentileLatency(.95));
         System.out.printf("99th percentile latency:       %,9d ms\n", stats.kPercentileLatency(.99));
 
-        System.out.print("\n" + HORIZONTAL_RULE);
-        System.out.println(" System Server Statistics");
-        System.out.println(HORIZONTAL_RULE);
+        printHeading("System Server Statistics");
 
         if (config.autotune) {
             System.out.printf("Targeted Internal Avg Latency: %,9d ms\n", config.latencytarget);
         }
-        // cast stats.getAverageInternalLatency from long to double
         System.out.printf("Reported Internal Avg Latency: %,9.2f ms\n", (double)stats.getAverageInternalLatency());
-        //System.out.printf("Reported Internal Avg Latency: %,9d ms\n", stats.getAverageInternalLatency());
 
         // 4. Write stats to file if requested
         client.writeSummaryCSV(stats, config.statsfile);
@@ -245,9 +226,6 @@ public abstract class BaseBenchmark {
      */
     public void iterate() throws Exception {
     }
-	
-	public void iterate(int iteration) throws Exception {
-    }
 
     /**
      * Core benchmark code.
@@ -256,16 +234,13 @@ public abstract class BaseBenchmark {
      * @throws Exception if anything unexpected happens.
      */
     public void runBenchmark() throws Exception {
-        System.out.print(HORIZONTAL_RULE);
-        System.out.println(" Setup & Initialization");
-        System.out.println(HORIZONTAL_RULE);
+        printHeading("Setup & Initialization");
 
         // connect to one or more servers, loop until success
         connect(config.servers);
 
         // initialize using synchronous call
         System.out.println("\nPre-loading Tables...\n");
-        //client.callProcedure("Initialize", config.contestants, CONTESTANT_NAMES_CSV);
         initialize();
 
         // Run the benchmark loop for the requested warmup time
@@ -276,9 +251,7 @@ public abstract class BaseBenchmark {
             iterate();
         }
 
-        System.out.print(HORIZONTAL_RULE);
-        System.out.println("Starting Benchmark");
-        System.out.println(HORIZONTAL_RULE);
+        printHeading("Starting Benchmark");
 
         // reset the stats after warmup
         fullStatsContext.fetchAndResetBaseline();
@@ -292,7 +265,6 @@ public abstract class BaseBenchmark {
         // The throughput may be throttled depending on client configuration
         System.out.println("\nRunning benchmark...");
         final long benchmarkEndTime = System.currentTimeMillis() + (1000l * config.duration);
-
         while (benchmarkEndTime > System.currentTimeMillis()) {
             iterate();
         }
@@ -308,6 +280,15 @@ public abstract class BaseBenchmark {
 
         // close down the client connections
         client.close();
+    }
+
+    /**
+     * Prints headings
+     */
+    public static void printHeading(String heading) {
+        System.out.print("\n"+HORIZONTAL_RULE);
+        System.out.println(" " + heading);
+        System.out.println(HORIZONTAL_RULE);
     }
 
 }

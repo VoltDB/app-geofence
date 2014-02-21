@@ -35,18 +35,6 @@ public class GeoFenceBenchmark extends BaseBenchmark {
 
     }
 
-    public void printResults() throws Exception {
-        
-        System.out.print("\n" + HORIZONTAL_RULE);
-        System.out.println(" Transaction Results");
-        System.out.println(HORIZONTAL_RULE);
-
-        BenchmarkCallback.printProcedureResults("DEVICES.insert");
-        BenchmarkCallback.printProcedureResults("PositionUpdate");
-
-        super.printResults();
-    }
-
     public static void main(String[] args) throws Exception {
         BenchmarkConfig config = BenchmarkConfig.getConfig("GeoFenceBenchmark",args);
         
