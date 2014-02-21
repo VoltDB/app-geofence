@@ -34,15 +34,11 @@
 <h2>
 <a name="use-case" class="anchor" href="#use-case"><span class="octicon octicon-link"></span></a>Use Case</h2>
 
-<p>I this example application, thousands of devices are tracked as they provide position (lat/long) updates.  Devices can have geo-fences defined individually based on a "home" location and a radius in miles.</p>
+<p>One million devices are tracked as they provide continuous position (lat/long) updates and pass in and out of personalized geo-fence boundaries.  Alert events are generated whenever a device exits or enters the fence, which is defined individually for each device based on a "home" location and a radius in miles.  </p>
 
-<p>The client in this example, initializes the device data in the database and then generates random updates to simulate updates that would be received from the devices.  The simulated updates are rudimentary, based on a random small change in lat/long from the device's previous position, so the devices will tend to move in a 2-dimensional "random walk", starting from their home locations.</p>
+<p>The client application creates the set of devices with their geo-fence defintions and then begins generating random device updates.  Each device starts at it's home location and then each subsequent update is a based on a "random walk" incremental change from the last position.</p>
 
 <p>The database ingests these updates and keeps a history of the positions for each device.  As it processes each update, it also checks to see if this device has a geo-fence enabled and if so, whether the device was previously in-bounds or out-of-bounds.  It calculates the distance from "home" to the new location to see if it is in or out of bounds.  If this is a change in status, it generates an "exit" or "entry" event record, which would result in a notification to the device owner.  All of this logic is found in the "PositionUpdate" stored procedure.</p>
-
-<p>The "TrackEvent" stored procedure processes these events.  It looks up the corresponding advertiser and campaign based on the creative ID which represents which ad was shown.  It also retrieves the corresponding web site and page based on the inventory ID from the event.  The timestamp and event type fields are converted to aid in aggregation, and all of this data is then inserted into the impression_data table.</p>
-
-<p>Several views maintain real-time aggregations on this table to provide a minutely summary for each advertiser, plus drill-down reports grouped by campaign and creative to show detail-level metrics, costs and rates with real-time accuracy.</p>
 
 <h2>
 <a name="code-organization" class="anchor" href="#code-organization"><span class="octicon octicon-link"></span></a>Code organization</h2>
@@ -50,12 +46,12 @@
 <h3>
 <a name="db" class="anchor" href="#db"><span class="octicon octicon-link"></span></a>db</h3>
 
-<p>The database project, which contains the schema, stored procedures and other configurations that are compiled into a catalog and run in a VoltDB database.  </p>
+<p>The database schema and stored procedures</p>
 
 <h3>
 <a name="client" class="anchor" href="#client"><span class="octicon octicon-link"></span></a>client</h3>
 
-<p>The java client that loads a set of cards and then generates random card transactions a high velocity to simulate card activity.</p>
+<p>The java benchmark client application.</p>
 
 <h2>
 <a name="instructions" class="anchor" href="#instructions"><span class="octicon octicon-link"></span></a>Instructions</h2>
@@ -102,6 +98,16 @@ SELECT * FROM device_location WHERE id = ? ORDER BY ts;</p>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
-    
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-47652901-5");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
   </body>
 </html>
