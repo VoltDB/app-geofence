@@ -1,6 +1,5 @@
-package client;
 /* This file is part of VoltDB.
- * Copyright (C) 2008-2013 VoltDB Inc.
+ * Copyright (C) 2008-2015 VoltDB Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -22,10 +21,12 @@ package client;
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+package client;
+
 import org.voltdb.CLIConfig;
 
 /**
- * Uses CLIConfig class to declaratively state command line options 
+ * Uses CLIConfig class to declaratively state command line options
  * with defaults and validation.
  */
 public class BenchmarkConfig extends CLIConfig {
@@ -76,7 +77,7 @@ public class BenchmarkConfig extends CLIConfig {
         config.parse(classname, args);
         return config;
     }
-    
+
     @Override
     public void validate() {
         if (duration <= 0) exitWithMessageAndUsage("duration must be > 0");
